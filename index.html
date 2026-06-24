@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beaver Telemetry • Tahsis Mission Log</title>
+    <title>Dr. Edse Mission Log • Tahsis 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="manifest" href="data:application/manifest+json,{
-      &quot;name&quot;: &quot;Beaver Telemetry&quot;,
-      &quot;short_name&quot;: &quot;BeaverLog&quot;,
+      &quot;name&quot;: &quot;Edse Mission Log&quot;,
+      &quot;short_name&quot;: &quot;EdseLog&quot;,
       &quot;start_url&quot;: &quot;.&quot;,
       &quot;display&quot;: &quot;standalone&quot;,
-      &quot;background_color&quot;: &quot;#0f172a&quot;,
-      &quot;theme_color&quot;: &quot;#166534&quot;,
+      &quot;background_color&quot;: &quot;#1C1D1F&quot;,
+      &quot;theme_color&quot;: &quot;#BA0C2F&quot;,
       &quot;icons&quot;: [{
         &quot;src&quot;: &quot;https://via.placeholder.com/192&quot;,
         &quot;sizes&quot;: &quot;192x192&quot;,
@@ -20,56 +20,345 @@
       }]
     }">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
-        body { font-family: 'Inter', system_ui, sans-serif; }
-        .title-font { font-family: 'Space Grotesk', sans-serif; }
-        .salmon-gradient { background: linear-gradient(135deg, #166534, #854d0e); }
+        @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+
+        :root {
+            --chalk-white:  #F5F5F5;
+            --chalk-scarlet:#BA0C2F;
+            --chalk-gray:   #A2AAAD;
+            --board-bg:     #1C1D1F;
+            --board-card:   #252628;
+            --board-input:  #2E3032;
+            --board-border: rgba(162,170,173,0.18);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--board-bg);
+            color: var(--chalk-white);
+            min-height: 100vh;
+            /* Subtle ruled-chalk-line texture */
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 31px,
+                rgba(162,170,173,0.035) 31px,
+                rgba(162,170,173,0.035) 32px
+            );
+        }
+
+        /* ── Typography ─────────────────────────────────── */
+        .chalk-title   { font-family: 'Caveat', cursive; letter-spacing: 0.04em; }
+        .chalk-heading { font-family: 'Caveat', cursive; letter-spacing: 0.02em; }
+
+        /* ── Header ─────────────────────────────────────── */
+        .chalk-header {
+            background-color: var(--chalk-scarlet);
+            border-radius: 1rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(245,245,245,0.12);
+        }
+        .chalk-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.09) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+        /* ── Cards ──────────────────────────────────────── */
+        .chalk-card {
+            background-color: var(--board-card);
+            border: 1px solid var(--board-border);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+        }
+
+        /* ── Inputs & Selects ───────────────────────────── */
+        .chalk-input {
+            width: 100%;
+            background-color: var(--board-input);
+            border: 1px solid var(--board-border);
+            border-radius: 0.625rem;
+            padding: 0.7rem 1rem;
+            color: var(--chalk-white);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            transition: border-color 0.15s;
+        }
+        .chalk-input:focus { outline: none; border-color: var(--chalk-scarlet); }
+        .chalk-input option { background: var(--board-input); }
+
+        /* ── Labels ─────────────────────────────────────── */
+        .chalk-label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--chalk-gray);
+            margin-bottom: 0.3rem;
+        }
+
+        /* ── Buttons ─────────────────────────────────────── */
+        .chalk-btn-primary {
+            background-color: var(--chalk-scarlet);
+            color: var(--chalk-white);
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.9rem 1rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.15s;
+            flex: 1;
+        }
+        .chalk-btn-primary:hover { opacity: 0.87; }
+
+        .chalk-btn-outline {
+            background-color: transparent;
+            color: var(--chalk-white);
+            border: 1.5px solid rgba(245,245,245,0.45);
+            border-radius: 0.75rem;
+            padding: 0.9rem 1rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: border-color 0.15s;
+            flex: 1;
+        }
+        .chalk-btn-outline:hover { border-color: var(--chalk-white); }
+
+        .chalk-btn-ghost {
+            background-color: var(--board-input);
+            color: var(--chalk-white);
+            border: 1px solid var(--board-border);
+            border-radius: 0.625rem;
+            padding: 0.55rem 1.1rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        .chalk-btn-ghost:hover { background-color: #363839; }
+
+        .chalk-btn-wide {
+            background-color: var(--board-input);
+            color: var(--chalk-gray);
+            border: 1px dashed var(--board-border);
+            border-radius: 0.75rem;
+            padding: 0.8rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            width: 100%;
+            transition: color 0.15s, background-color 0.15s;
+        }
+        .chalk-btn-wide:hover { background-color: #363839; color: var(--chalk-white); }
+
+        .chalk-btn-danger {
+            background: transparent;
+            color: var(--chalk-gray);
+            border: none;
+            padding: 0.55rem 1rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .chalk-btn-danger:hover { color: var(--chalk-scarlet); }
+
+        /* ── Tab bar ────────────────────────────────────── */
+        .tab-bar {
+            display: flex;
+            border-bottom: 1px solid var(--board-border);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 0.8rem 0.5rem;
+            text-align: center;
+            font-family: 'Caveat', cursive;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--chalk-gray);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .tab-btn:hover { color: var(--chalk-white); }
+        .tab-btn.active { color: var(--chalk-scarlet); border-bottom-color: var(--chalk-scarlet); }
+
+        /* ── Crew cards ─────────────────────────────────── */
+        .crew-card {
+            background-color: var(--board-input);
+            border: 1px solid var(--board-border);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+        .crew-avatar {
+            width: 2rem;
+            height: 2rem;
+            background-color: var(--chalk-scarlet);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Caveat', cursive;
+            font-size: 1rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .crew-name-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            flex: 1;
+            font-weight: 500;
+            color: var(--chalk-white);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+        }
+        .crew-remove {
+            background: none;
+            border: none;
+            color: var(--chalk-gray);
+            font-size: 1.2rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            transition: color 0.15s;
+        }
+        .crew-remove:hover { color: var(--chalk-scarlet); }
+
+        /* ── Log entries ────────────────────────────────── */
+        .log-entry {
+            background-color: var(--board-input);
+            border: 1px solid var(--board-border);
+            border-radius: 0.875rem;
+            padding: 1.1rem 1.25rem;
+        }
+        .log-weight { color: var(--chalk-scarlet); font-weight: 600; }
+
+        /* ── Leaderboard ────────────────────────────────── */
+        .lb-entry {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--board-input);
+            border: 1px solid var(--board-border);
+            border-radius: 0.75rem;
+            padding: 0.9rem 1.25rem;
+        }
+        .lb-rank {
+            font-family: 'Caveat', cursive;
+            font-size: 2rem;
+            color: var(--chalk-scarlet);
+            line-height: 1;
+        }
+
+        /* ── Story entries ──────────────────────────────── */
+        .story-entry {
+            background-color: var(--board-input);
+            border: 1px solid var(--board-border);
+            border-left: 3px solid var(--chalk-scarlet);
+            border-radius: 0.875rem;
+            padding: 1.1rem 1.25rem;
+        }
+
+        /* ── Bottom bar ─────────────────────────────────── */
+        .bottom-bar {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--board-card);
+            border: 1px solid var(--board-border);
+            border-radius: 1rem;
+            padding: 0.6rem 1.25rem;
+            display: flex;
+            gap: 0.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+            z-index: 50;
+        }
+
+        /* ── Misc ───────────────────────────────────────── */
+        .eqn-watermark {
+            font-family: 'Caveat', cursive;
+            font-size: 0.8rem;
+            color: rgba(245,245,245,0.3);
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--board-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--board-border); border-radius: 2px; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 min-h-screen">
-    <div class="max-w-2xl mx-auto p-4">
+<body>
+    <div class="max-w-2xl mx-auto p-4 pb-28">
+
         <!-- Header -->
-        <header class="salmon-gradient text-white rounded-3xl p-6 mb-6 shadow-xl">
-            <div class="flex items-center justify-between">
+        <header class="chalk-header p-6 mb-6 shadow-xl">
+            <div class="flex items-center justify-between gap-4">
                 <div>
-                    <h1 class="title-font text-3xl font-bold tracking-tight">🐟 Beaver Telemetry</h1>
-                    <p class="text-slate-200/90">Tahsis 2026 • Westview Marina • OSU Aero '89</p>
+                    <h1 class="chalk-title text-4xl font-bold">🐟 Beaver Telemetry</h1>
+                    <p style="color:rgba(245,245,245,0.82);font-size:0.875rem;margin-top:0.2rem;">
+                        Tahsis 2026 • Westview Marina • OSU Aero '89
+                    </p>
                 </div>
-                <div class="text-right text-sm">
-                    <div class="bg-white/20 px-3 py-1 rounded-2xl">Nootka / Esperanza Mission</div>
+                <div style="text-align:right;flex-shrink:0;">
+                    <div style="background:rgba(245,245,245,0.15);border:1px solid rgba(245,245,245,0.22);border-radius:0.5rem;padding:0.2rem 0.7rem;font-size:0.78rem;margin-bottom:0.4rem;">
+                        Nootka / Esperanza Mission
+                    </div>
+                    <div class="eqn-watermark">ΔS ≥ 0 &nbsp;•&nbsp; dU = δQ − δW</div>
                 </div>
             </div>
         </header>
 
         <!-- Tabs -->
-        <div class="flex border-b border-slate-700 mb-6 overflow-x-auto">
-            <button onclick="switchTab(0)" class="tab-btn flex-1 py-3 text-center font-medium border-b-2 border-emerald-500 text-emerald-400 whitespace-nowrap" id="tab-0">Log Catch</button>
-            <button onclick="switchTab(1)" class="tab-btn flex-1 py-3 text-center font-medium text-slate-400 hover:text-slate-200 whitespace-nowrap" id="tab-1">Logs</button>
-            <button onclick="switchTab(2)" class="tab-btn flex-1 py-3 text-center font-medium text-slate-400 hover:text-slate-200 whitespace-nowrap" id="tab-2">Dashboard</button>
-            <button onclick="switchTab(3)" class="tab-btn flex-1 py-3 text-center font-medium text-slate-400 hover:text-slate-200 whitespace-nowrap" id="tab-3">Stories</button>
+        <div class="tab-bar">
+            <button onclick="switchTab(0)" class="tab-btn active" id="tab-0">Log Catch</button>
+            <button onclick="switchTab(1)" class="tab-btn" id="tab-1">Logs</button>
+            <button onclick="switchTab(2)" class="tab-btn" id="tab-2">Dashboard</button>
+            <button onclick="switchTab(3)" class="tab-btn" id="tab-3">Stories</button>
         </div>
 
         <!-- Tab 0: Log Catch -->
         <div id="tab-content-0" class="tab-content">
+
             <!-- Crew Setup -->
-            <div class="mb-8 bg-slate-900 rounded-3xl p-6">
-                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><span class="text-2xl">👥</span> Crew Manifest (OSU Aero)</h2>
+            <div class="chalk-card mb-5">
+                <h2 class="chalk-heading text-2xl font-semibold mb-4" style="display:flex;align-items:center;gap:0.5rem;">
+                    <span>👥</span> Crew Manifest (OSU Aero)
+                </h2>
                 <div id="crew-list" class="grid grid-cols-2 gap-3"></div>
-                <button onclick="addCrewMember()" class="mt-4 w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl text-sm font-medium">+ Add Crewmate</button>
+                <button onclick="addCrewMember()" class="chalk-btn-wide mt-4">+ Add Crewmate</button>
             </div>
 
             <!-- Catch Form -->
-            <div class="bg-slate-900 rounded-3xl p-6">
-                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><span class="text-2xl">🎣</span> Log a Catch</h2>
-                <form id="catch-form" class="space-y-5">
+            <div class="chalk-card">
+                <h2 class="chalk-heading text-2xl font-semibold mb-5" style="display:flex;align-items:center;gap:0.5rem;">
+                    <span>🎣</span> Log a Catch
+                </h2>
+                <form id="catch-form" style="display:flex;flex-direction:column;gap:1.1rem;">
                     <div>
-                        <label class="block text-sm text-slate-400 mb-1">Angler</label>
-                        <select id="angler" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white"></select>
+                        <label class="chalk-label">Angler</label>
+                        <select id="angler" class="chalk-input"></select>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;">
                         <div>
-                            <label class="block text-sm text-slate-400 mb-1">Location</label>
-                            <select id="location" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white">
+                            <label class="chalk-label">Location</label>
+                            <select id="location" class="chalk-input">
                                 <option value="Westview Marina / Tahsis Inlet">Westview Marina / Tahsis Inlet</option>
                                 <option value="Esperanza Inlet - Rosa Harbour">Esperanza Inlet - Rosa Harbour</option>
                                 <option value="Esperanza Inlet - Grassi Island">Esperanza Inlet - Grassi Island</option>
@@ -80,8 +369,8 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm text-slate-400 mb-1">Species</label>
-                            <select id="species" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white">
+                            <label class="chalk-label">Species</label>
+                            <select id="species" class="chalk-input">
                                 <option value="Chinook (King)">Chinook (King)</option>
                                 <option value="Coho (Silver)">Coho (Silver)</option>
                                 <option value="Sockeye">Sockeye</option>
@@ -90,65 +379,67 @@
                             </select>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;">
                         <div>
-                            <label class="block text-sm text-slate-400 mb-1">Est. Weight (lbs)</label>
-                            <input type="number" id="weight" step="0.1" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white" placeholder="18.5">
+                            <label class="chalk-label">Est. Weight (lbs)</label>
+                            <input type="number" id="weight" step="0.1" class="chalk-input" placeholder="18.5">
                         </div>
                         <div>
-                            <label class="block text-sm text-slate-400 mb-1">Length (in)</label>
-                            <input type="number" id="length" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white" placeholder="38">
+                            <label class="chalk-label">Length (in)</label>
+                            <input type="number" id="length" class="chalk-input" placeholder="38">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm text-slate-400 mb-1">Gear / Notes</label>
-                        <input type="text" id="notes" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white" placeholder="Trolling with downrigger...">
+                        <label class="chalk-label">Gear / Notes</label>
+                        <input type="text" id="notes" class="chalk-input" placeholder="Trolling with downrigger...">
                     </div>
                     <div>
-                        <label class="block text-sm text-slate-400 mb-1">Story / Black Box</label>
-                        <textarea id="story" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-3xl px-4 py-3 text-white" placeholder="What happened? Any Prof. Edse moments?"></textarea>
+                        <label class="chalk-label">Story / Black Box</label>
+                        <textarea id="story" rows="3" class="chalk-input" style="resize:vertical;" placeholder="What happened? Any Prof. Edse moments?"></textarea>
                     </div>
-                    <div class="flex gap-3">
-                        <button type="button" onclick="logCatch()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-4 rounded-3xl font-semibold text-lg">Log This Catch 🐟</button>
-                        <button type="button" onclick="edseAnalysis()" class="flex-1 bg-amber-600 hover:bg-amber-500 py-4 rounded-3xl font-semibold">Edse Analysis</button>
+                    <div style="display:flex;gap:0.75rem;">
+                        <button type="button" onclick="logCatch()" class="chalk-btn-primary">Log This Catch 🐟</button>
+                        <button type="button" onclick="edseAnalysis()" class="chalk-btn-outline">Edse Analysis</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- Tab 1: Logs -->
-        <div id="tab-content-1" class="tab-content hidden">
-            <div class="bg-slate-900 rounded-3xl p-6">
-                <h2 class="text-xl font-semibold mb-4">Mission Logs</h2>
-                <div id="logs-list" class="space-y-4 max-h-[500px] overflow-auto"></div>
+        <div id="tab-content-1" class="tab-content" style="display:none;">
+            <div class="chalk-card">
+                <h2 class="chalk-heading text-2xl font-semibold mb-4">Mission Logs</h2>
+                <div id="logs-list" style="display:flex;flex-direction:column;gap:0.9rem;max-height:500px;overflow:auto;"></div>
             </div>
         </div>
 
         <!-- Tab 2: Dashboard -->
-        <div id="tab-content-2" class="tab-content hidden">
-            <div class="bg-slate-900 rounded-3xl p-6">
-                <h2 class="text-xl font-semibold mb-4">Crew Dashboard</h2>
-                <canvas id="stats-chart" class="mb-6"></canvas>
-                <div id="leaderboard" class="space-y-3"></div>
+        <div id="tab-content-2" class="tab-content" style="display:none;">
+            <div class="chalk-card">
+                <h2 class="chalk-heading text-2xl font-semibold mb-4">Crew Dashboard</h2>
+                <canvas id="stats-chart" style="margin-bottom:1.5rem;"></canvas>
+                <div id="leaderboard" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
             </div>
         </div>
 
         <!-- Tab 3: Stories -->
-        <div id="tab-content-3" class="tab-content hidden">
-            <div class="bg-slate-900 rounded-3xl p-6">
-                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><span>📖</span> Story Vault (incl. Edse memories)</h2>
-                <div class="space-y-4">
-                    <button onclick="addStory()" class="w-full bg-slate-800 hover:bg-slate-700 py-4 rounded-3xl">+ New Story / Edse Memory</button>
-                    <div id="stories-list" class="space-y-4"></div>
+        <div id="tab-content-3" class="tab-content" style="display:none;">
+            <div class="chalk-card">
+                <h2 class="chalk-heading text-2xl font-semibold mb-4" style="display:flex;align-items:center;gap:0.5rem;">
+                    <span>📖</span> Story Vault (incl. Edse memories)
+                </h2>
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+                    <button onclick="addStory()" class="chalk-btn-wide">+ New Story / Edse Memory</button>
+                    <div id="stories-list" style="display:flex;flex-direction:column;gap:1rem;"></div>
                 </div>
             </div>
         </div>
 
         <!-- Bottom Bar -->
-        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 rounded-3xl px-6 py-3 flex gap-3 shadow-2xl z-50">
-            <button onclick="exportData()" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 rounded-2xl text-sm">Export JSON</button>
-            <button onclick="importData()" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 rounded-2xl text-sm">Import</button>
-            <button onclick="clearAllData()" class="px-5 py-2 text-red-400 hover:text-red-300 text-sm">Reset</button>
+        <div class="bottom-bar">
+            <button onclick="exportData()" class="chalk-btn-ghost">Export JSON</button>
+            <button onclick="importData()" class="chalk-btn-ghost">Import</button>
+            <button onclick="clearAllData()" class="chalk-btn-danger">Reset</button>
         </div>
     </div>
 
@@ -186,11 +477,11 @@
             container.innerHTML = '';
             crew.forEach((name, i) => {
                 const div = document.createElement('div');
-                div.className = 'bg-slate-800 rounded-2xl p-4 flex items-center gap-3';
+                div.className = 'crew-card';
                 div.innerHTML = `
-                    <div class="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center text-sm font-bold">${name[0] || '?'}</div>
-                    <input value="${name}" onchange="updateCrew(${i}, this.value)" class="bg-transparent border-none focus:outline-none flex-1 font-medium text-white">
-                    ${crew.length > 1 ? `<button onclick="removeCrew(${i})" class="text-red-400 text-xl leading-none">×</button>` : ''}
+                    <div class="crew-avatar">${name[0] || '?'}</div>
+                    <input value="${name}" onchange="updateCrew(${i}, this.value)" class="crew-name-input" placeholder="Name">
+                    ${crew.length > 1 ? `<button onclick="removeCrew(${i})" class="crew-remove">×</button>` : ''}
                 `;
                 container.appendChild(div);
             });
@@ -256,16 +547,19 @@
 
         function renderLogs() {
             const container = document.getElementById('logs-list');
-            container.innerHTML = logs.length === 0 
-                ? '<p class="text-slate-400 text-center py-12">No catches logged yet.<br>Get out there on Esperanza!</p>'
+            container.innerHTML = logs.length === 0
+                ? '<p style="color:var(--chalk-gray);text-align:center;padding:3rem 0;">No catches logged yet.<br>Get out there on Esperanza!</p>'
                 : logs.map(log => `
-                    <div class="bg-slate-800 rounded-3xl p-5">
-                        <div class="flex justify-between">
-                            <div><span class="font-semibold">${log.angler}</span> • ${log.timestamp}</div>
-                            <div class="text-emerald-400">${log.weight} lbs</div>
+                    <div class="log-entry">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div>
+                                <span style="font-weight:600;">${log.angler}</span>
+                                <span style="color:var(--chalk-gray);font-size:0.78rem;margin-left:0.4rem;">${log.timestamp}</span>
+                            </div>
+                            <div class="log-weight">${log.weight} lbs</div>
                         </div>
-                        <div class="mt-1 text-lg">${log.species} • ${log.location}</div>
-                        ${log.story ? `<div class="mt-3 text-sm italic text-slate-300">"${log.story}"</div>` : ''}
+                        <div style="margin-top:0.3rem;font-size:0.95rem;">${log.species} <span style="color:var(--chalk-gray);">•</span> ${log.location}</div>
+                        ${log.story ? `<div style="margin-top:0.65rem;font-size:0.85rem;font-style:italic;color:var(--chalk-gray);">"${log.story}"</div>` : ''}
                     </div>
                 `).join('');
         }
@@ -276,16 +570,16 @@
                 const count = anglerLogs.length;
                 const weight = anglerLogs.reduce((sum, l) => sum + (l.weight || 0), 0);
                 return {name, count, weight};
-            }).sort((a,b) => b.weight - a.weight)
+            }).sort((a, b) => b.weight - a.weight)
             .map((entry, idx) => `
-                <div class="flex items-center justify-between bg-slate-800 rounded-2xl px-5 py-4">
-                    <div class="flex items-center gap-4">
-                        <div class="text-3xl font-light text-emerald-500">${idx+1}</div>
+                <div class="lb-entry">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <div class="lb-rank">${idx + 1}</div>
                         <div>${entry.name}</div>
                     </div>
-                    <div class="text-right">
-                        <div>${entry.count} fish</div>
-                        <div class="text-emerald-400">${entry.weight.toFixed(1)} lbs</div>
+                    <div style="text-align:right;">
+                        <div style="color:var(--chalk-gray);font-size:0.85rem;">${entry.count} fish</div>
+                        <div class="log-weight">${entry.weight.toFixed(1)} lbs</div>
                     </div>
                 </div>
             `).join('');
@@ -297,9 +591,38 @@
                 type: 'bar',
                 data: {
                     labels: crew,
-                    datasets: [{ label: 'Fish Caught', data: crew.map(name => logs.filter(l => l.angler === name).length), backgroundColor: '#10b981' }]
+                    datasets: [{
+                        label: 'Fish Caught',
+                        data: crew.map(name => logs.filter(l => l.angler === name).length),
+                        backgroundColor: '#BA0C2F',
+                        borderColor: 'rgba(245,245,245,0.12)',
+                        borderWidth: 1,
+                        borderRadius: 5
+                    }]
                 },
-                options: { responsive: true, plugins: { legend: { display: false }}}
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#252628',
+                            titleColor: '#F5F5F5',
+                            bodyColor: '#A2AAAD',
+                            borderColor: 'rgba(162,170,173,0.2)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#A2AAAD', font: { family: 'Inter' } },
+                            grid:  { color: 'rgba(162,170,173,0.07)' }
+                        },
+                        y: {
+                            ticks: { color: '#A2AAAD', font: { family: 'Inter' } },
+                            grid:  { color: 'rgba(162,170,173,0.07)' }
+                        }
+                    }
+                }
             });
         }
 
@@ -314,26 +637,22 @@
 
         function renderStories() {
             const container = document.getElementById('stories-list');
-            container.innerHTML = stories.length === 0 
-                ? '<p class="text-slate-400 text-center py-8">No stories yet. Add some Prof. Edse blackboard classics!</p>'
+            container.innerHTML = stories.length === 0
+                ? '<p style="color:var(--chalk-gray);text-align:center;padding:2rem 0;">No stories yet. Add some Prof. Edse blackboard classics!</p>'
                 : stories.map(s => `
-                    <div class="bg-slate-800 rounded-3xl p-5">
-                        <div class="text-xs text-slate-500">${s.timestamp}</div>
-                        <p class="mt-2">${s.text}</p>
+                    <div class="story-entry">
+                        <div style="font-size:0.72rem;color:var(--chalk-gray);letter-spacing:0.05em;text-transform:uppercase;">${s.timestamp}</div>
+                        <p style="margin-top:0.5rem;line-height:1.65;">${s.text}</p>
                     </div>
                 `).join('');
         }
 
         function switchTab(n) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-content-${n}`).classList.remove('hidden');
-            
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.getElementById(`tab-content-${n}`).style.display = 'block';
+
             document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-                if (i === n) {
-                    btn.classList.add('border-b-2', 'border-emerald-500', 'text-emerald-400');
-                } else {
-                    btn.classList.remove('border-b-2', 'border-emerald-500', 'text-emerald-400');
-                }
+                btn.classList.toggle('active', i === n);
             });
 
             if (n === 1) renderLogs();
@@ -361,9 +680,9 @@
                 reader.onload = ev => {
                     try {
                         const imported = JSON.parse(ev.target.result);
-                        if (imported.logs) logs = logs.concat(imported.logs);
+                        if (imported.logs)    logs    = logs.concat(imported.logs);
                         if (imported.stories) stories = stories.concat(imported.stories);
-                        if (imported.crew) crew = imported.crew;
+                        if (imported.crew)    crew    = imported.crew;
                         saveData();
                         renderCrew();
                         alert('✅ Data imported!');
@@ -393,7 +712,7 @@
             loadData();
             renderCrew();
             switchTab(0);
-            console.log('%cBeaver Telemetry ready for Tahsis!', 'color:#10b981;font-weight:bold');
+            console.log('%cDr. Edse Mission Log ready — ΔS ≥ 0', 'color:#BA0C2F;font-weight:bold;font-size:14px');
         };
     </script>
 </body>
