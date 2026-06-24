@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beaver Telemetry • Tahsis Mission Log</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="manifest" href="data:application/manifest+json,{
+      &quot;name&quot;: &quot;Beaver Telemetry&quot;,
+      &quot;short_name&quot;: &quot;BeaverLog&quot;,
+      &quot;start_url&quot;: &quot;.&quot;,
+      &quot;display&quot;: &quot;standalone&quot;,
+      &quot;background_color&quot;: &quot;#0f172a&quot;,
+      &quot;theme_color&quot;: &quot;#166534&quot;,
+      &quot;icons&quot;: [{
+        &quot;src&quot;: &quot;https://via.placeholder.com/192&quot;,
+        &quot;sizes&quot;: &quot;192x192&quot;,
+        &quot;type&quot;: &quot;image/png&quot;
+      }]
+    }">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        body { font-family: 'Inter', system_ui, sans-serif; }
+        .title-font { font-family: 'Space Grotesk', sans-serif; }
+        .salmon-gradient { background: linear-gradient(135deg, #166534, #854d0e); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+    <div class="max-w-2xl mx-auto p-4">
+        <!-- Header -->
+        <header class="salmon-gradient text-white rounded-3xl p-6 mb-6 shadow-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="title-font text-3xl font-bold tracking-tight">🐟 Beaver Telemetry</h1>
+                    <p class="text-slate-200/90">Tahsis 2026 • Westview Marina • OSU Aero '89</p>
+                </div>
+                <div class="text-right text-sm">
+                    <div class="bg-white/20 px-3 py-1 rounded-2xl">Nootka / Esperanza Mission</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-slate-700 mb-6 overflow-x-auto">
+            <button onclick="switchTab(0)" class="tab-btn flex-1 py-3 text-center font-medium border-b-2 border-emerald-500 text-emerald-400 whitespace-nowrap" id="tab-0">Log Catch</button>
+            <button onclick="switchTab(1)" class="tab-btn flex-1 py-3 text-center font-medium text-slate-400 hover:text-slate-200 whitespace-nowrap" id="tab-1">Logs</button>
+            <button onclick="switchTab(2)" class="tab-btn flex-1 py-3 text-center font-medium text-slate-400 hover:text-slate-200 whitespace-nowrap" id="tab-2">Dashboard</button>
+            <button onclick="switchTab(3)" class="tab-btn flex-1 py-3 text-center font-medium text-slate-400 hover:text-slate-200 whitespace-nowrap" id="tab-3">Stories</button>
+        </div>
+
+        <!-- Tab 0: Log Catch -->
+        <div id="tab-content-0" class="tab-content">
+            <!-- Crew Setup -->
+            <div class="mb-8 bg-slate-900 rounded-3xl p-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><span class="text-2xl">👥</span> Crew Manifest (OSU Aero)</h2>
+                <div id="crew-list" class="grid grid-cols-2 gap-3"></div>
+                <button onclick="addCrewMember()" class="mt-4 w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl text-sm font-medium">+ Add Crewmate</button>
+            </div>
+
+            <!-- Catch Form -->
+            <div class="bg-slate-900 rounded-3xl p-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><span class="text-2xl">🎣</span> Log a Catch</h2>
+                <form id="catch-form" class="space-y-5">
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Angler</label>
+                        <select id="angler" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white"></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Location</label>
+                            <select id="location" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white">
+                                <option value="Westview Marina / Tahsis Inlet">Westview Marina / Tahsis Inlet</option>
+                                <option value="Esperanza Inlet - Rosa Harbour">Esperanza Inlet - Rosa Harbour</option>
+                                <option value="Esperanza Inlet - Grassi Island">Esperanza Inlet - Grassi Island</option>
+                                <option value="Esperanza Inlet - Ferrer Point">Esperanza Inlet - Ferrer Point</option>
+                                <option value="Nootka Sound - Yuquot Point">Nootka Sound - Yuquot Point</option>
+                                <option value="Catala Island - Glory Hole">Catala Island - Glory Hole</option>
+                                <option value="Custom">Custom Location...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Species</label>
+                            <select id="species" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white">
+                                <option value="Chinook (King)">Chinook (King)</option>
+                                <option value="Coho (Silver)">Coho (Silver)</option>
+                                <option value="Sockeye">Sockeye</option>
+                                <option value="Pink">Pink</option>
+                                <option value="Chum">Chum</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Est. Weight (lbs)</label>
+                            <input type="number" id="weight" step="0.1" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white" placeholder="18.5">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Length (in)</label>
+                            <input type="number" id="length" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white" placeholder="38">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Gear / Notes</label>
+                        <input type="text" id="notes" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white" placeholder="Trolling with downrigger...">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Story / Black Box</label>
+                        <textarea id="story" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-3xl px-4 py-3 text-white" placeholder="What happened? Any Prof. Edse moments?"></textarea>
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="logCatch()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-4 rounded-3xl font-semibold text-lg">Log This Catch 🐟</button>
+                        <button type="button" onclick="edseAnalysis()" class="flex-1 bg-amber-600 hover:bg-amber-500 py-4 rounded-3xl font-semibold">Edse Analysis</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tab 1: Logs -->
+        <div id="tab-content-1" class="tab-content hidden">
+            <div class="bg-slate-900 rounded-3xl p-6">
+                <h2 class="text-xl font-semibold mb-4">Mission Logs</h2>
+                <div id="logs-list" class="space-y-4 max-h-[500px] overflow-auto"></div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Dashboard -->
+        <div id="tab-content-2" class="tab-content hidden">
+            <div class="bg-slate-900 rounded-3xl p-6">
+                <h2 class="text-xl font-semibold mb-4">Crew Dashboard</h2>
+                <canvas id="stats-chart" class="mb-6"></canvas>
+                <div id="leaderboard" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Stories -->
+        <div id="tab-content-3" class="tab-content hidden">
+            <div class="bg-slate-900 rounded-3xl p-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><span>📖</span> Story Vault (incl. Edse memories)</h2>
+                <div class="space-y-4">
+                    <button onclick="addStory()" class="w-full bg-slate-800 hover:bg-slate-700 py-4 rounded-3xl">+ New Story / Edse Memory</button>
+                    <div id="stories-list" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 rounded-3xl px-6 py-3 flex gap-3 shadow-2xl z-50">
+            <button onclick="exportData()" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 rounded-2xl text-sm">Export JSON</button>
+            <button onclick="importData()" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 rounded-2xl text-sm">Import</button>
+            <button onclick="clearAllData()" class="px-5 py-2 text-red-400 hover:text-red-300 text-sm">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        let crew = ["Tim", "Buddy 1", "Buddy 2", "Buddy 3"];
+        let logs = [];
+        let stories = [];
+        let chartInstance = null;
+
+        const edseComments = [
+            "Per Professor Edse: This catch generated enough entropy to require a full blackboard wipe-down. Formulas confirm—thermodynamics in action from his von Braun days!",
+            "Edse would be proud. He wiped the board clean and derived the exact drag coefficient from memory again. Classic.",
+            "Applying Edse thermodynamics: The salmon's fight transferred more energy than a German-accented lecture on equilibrium.",
+            "This one filled the imaginary blackboard. Prof. Rudolph Edse approves from the thermo lab!",
+            "Heat transfer off the charts! Edse is somewhere smiling while erasing the board and scribbling new formulas."
+        ];
+
+        function saveData() {
+            localStorage.setItem('beaverCrew', JSON.stringify(crew));
+            localStorage.setItem('beaverLogs', JSON.stringify(logs));
+            localStorage.setItem('beaverStories', JSON.stringify(stories));
+        }
+
+        function loadData() {
+            const savedCrew = localStorage.getItem('beaverCrew');
+            if (savedCrew) crew = JSON.parse(savedCrew);
+            const savedLogs = localStorage.getItem('beaverLogs');
+            if (savedLogs) logs = JSON.parse(savedLogs);
+            const savedStories = localStorage.getItem('beaverStories');
+            if (savedStories) stories = JSON.parse(savedStories);
+        }
+
+        function renderCrew() {
+            const container = document.getElementById('crew-list');
+            container.innerHTML = '';
+            crew.forEach((name, i) => {
+                const div = document.createElement('div');
+                div.className = 'bg-slate-800 rounded-2xl p-4 flex items-center gap-3';
+                div.innerHTML = `
+                    <div class="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center text-sm font-bold">${name[0] || '?'}</div>
+                    <input value="${name}" onchange="updateCrew(${i}, this.value)" class="bg-transparent border-none focus:outline-none flex-1 font-medium text-white">
+                    ${crew.length > 1 ? `<button onclick="removeCrew(${i})" class="text-red-400 text-xl leading-none">×</button>` : ''}
+                `;
+                container.appendChild(div);
+            });
+            updateAnglerSelect();
+        }
+
+        function updateCrew(i, val) {
+            crew[i] = val.trim() || `Crew ${i+1}`;
+            saveData();
+        }
+
+        function addCrewMember() {
+            if (crew.length < 8) {
+                crew.push(`Crew ${crew.length + 1}`);
+                renderCrew();
+                saveData();
+            }
+        }
+
+        function removeCrew(i) {
+            if (crew.length > 1) {
+                crew.splice(i, 1);
+                renderCrew();
+                saveData();
+            }
+        }
+
+        function updateAnglerSelect() {
+            const select = document.getElementById('angler');
+            select.innerHTML = '';
+            crew.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                select.appendChild(opt);
+            });
+        }
+
+        function logCatch() {
+            const catchData = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleString(),
+                angler: document.getElementById('angler').value,
+                location: document.getElementById('location').value,
+                species: document.getElementById('species').value,
+                weight: parseFloat(document.getElementById('weight').value) || 0,
+                length: parseFloat(document.getElementById('length').value) || 0,
+                notes: document.getElementById('notes').value,
+                story: document.getElementById('story').value
+            };
+            logs.unshift(catchData);
+            saveData();
+            renderLogs();
+            switchTab(1);
+            document.getElementById('catch-form').reset();
+            alert('✅ Catch logged! Great work on the water.');
+        }
+
+        function edseAnalysis() {
+            const random = edseComments[Math.floor(Math.random() * edseComments.length)];
+            alert("🧪 Professor Rudolph Edse Analysis:\n\n" + random);
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logs-list');
+            container.innerHTML = logs.length === 0 
+                ? '<p class="text-slate-400 text-center py-12">No catches logged yet.<br>Get out there on Esperanza!</p>'
+                : logs.map(log => `
+                    <div class="bg-slate-800 rounded-3xl p-5">
+                        <div class="flex justify-between">
+                            <div><span class="font-semibold">${log.angler}</span> • ${log.timestamp}</div>
+                            <div class="text-emerald-400">${log.weight} lbs</div>
+                        </div>
+                        <div class="mt-1 text-lg">${log.species} • ${log.location}</div>
+                        ${log.story ? `<div class="mt-3 text-sm italic text-slate-300">"${log.story}"</div>` : ''}
+                    </div>
+                `).join('');
+        }
+
+        function renderDashboard() {
+            const leaderboardHTML = crew.map(name => {
+                const anglerLogs = logs.filter(l => l.angler === name);
+                const count = anglerLogs.length;
+                const weight = anglerLogs.reduce((sum, l) => sum + (l.weight || 0), 0);
+                return {name, count, weight};
+            }).sort((a,b) => b.weight - a.weight)
+            .map((entry, idx) => `
+                <div class="flex items-center justify-between bg-slate-800 rounded-2xl px-5 py-4">
+                    <div class="flex items-center gap-4">
+                        <div class="text-3xl font-light text-emerald-500">${idx+1}</div>
+                        <div>${entry.name}</div>
+                    </div>
+                    <div class="text-right">
+                        <div>${entry.count} fish</div>
+                        <div class="text-emerald-400">${entry.weight.toFixed(1)} lbs</div>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('leaderboard').innerHTML = leaderboardHTML;
+
+            const ctx = document.getElementById('stats-chart');
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: crew,
+                    datasets: [{ label: 'Fish Caught', data: crew.map(name => logs.filter(l => l.angler === name).length), backgroundColor: '#10b981' }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false }}}
+            });
+        }
+
+        function addStory() {
+            const text = prompt("Share a story, Edse memory, or trip reflection:");
+            if (text && text.trim()) {
+                stories.unshift({id: Date.now(), text: text.trim(), timestamp: new Date().toLocaleDateString()});
+                saveData();
+                renderStories();
+            }
+        }
+
+        function renderStories() {
+            const container = document.getElementById('stories-list');
+            container.innerHTML = stories.length === 0 
+                ? '<p class="text-slate-400 text-center py-8">No stories yet. Add some Prof. Edse blackboard classics!</p>'
+                : stories.map(s => `
+                    <div class="bg-slate-800 rounded-3xl p-5">
+                        <div class="text-xs text-slate-500">${s.timestamp}</div>
+                        <p class="mt-2">${s.text}</p>
+                    </div>
+                `).join('');
+        }
+
+        function switchTab(n) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-content-${n}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+                if (i === n) {
+                    btn.classList.add('border-b-2', 'border-emerald-500', 'text-emerald-400');
+                } else {
+                    btn.classList.remove('border-b-2', 'border-emerald-500', 'text-emerald-400');
+                }
+            });
+
+            if (n === 1) renderLogs();
+            if (n === 2) renderDashboard();
+            if (n === 3) renderStories();
+        }
+
+        function exportData() {
+            const data = {crew, logs, stories, date: new Date().toISOString()};
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `beaver-telemetry-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    try {
+                        const imported = JSON.parse(ev.target.result);
+                        if (imported.logs) logs = logs.concat(imported.logs);
+                        if (imported.stories) stories = stories.concat(imported.stories);
+                        if (imported.crew) crew = imported.crew;
+                        saveData();
+                        renderCrew();
+                        alert('✅ Data imported!');
+                        switchTab(1);
+                    } catch(err) {
+                        alert('Invalid file');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function clearAllData() {
+            if (confirm('Reset everything?')) {
+                localStorage.clear();
+                logs = [];
+                stories = [];
+                crew = ["Tim", "Buddy 1", "Buddy 2", "Buddy 3"];
+                renderCrew();
+                switchTab(0);
+            }
+        }
+
+        // Initialize
+        window.onload = () => {
+            loadData();
+            renderCrew();
+            switchTab(0);
+            console.log('%cBeaver Telemetry ready for Tahsis!', 'color:#10b981;font-weight:bold');
+        };
+    </script>
+</body>
+</html>
