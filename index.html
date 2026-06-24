@@ -157,6 +157,7 @@
         let logs = [];
         let stories = [];
         let chartInstance = null;
+        const MAX_CREW_SIZE = 8;
 
         const edseComments = [
             "Per Professor Edse: This catch generated enough entropy to require a full blackboard wipe-down. Formulas confirm—thermodynamics in action from his von Braun days!",
@@ -167,12 +168,14 @@
         ];
 
         function escapeHtml(value) {
-            return String(value ?? '')
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#39;');
+            return String(value ?? '').replace(/[&<>"'`]/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+                '`': '&#96;'
+            }[char]));
         }
 
         function saveData() {
@@ -194,12 +197,13 @@
             const container = document.getElementById('crew-list');
             container.innerHTML = '';
             crew.forEach((name, i) => {
-                const safeName = escapeHtml(name);
-                const avatarInitial = String(name ?? '').trim().charAt(0) || '?';
+                const trimmedName = String(name ?? '').trim();
+                const safeName = escapeHtml(trimmedName);
+                const avatarInitial = escapeHtml(trimmedName.charAt(0) || '?');
                 const div = document.createElement('div');
                 div.className = 'bg-slate-800 rounded-2xl p-4 flex items-center gap-3';
                 div.innerHTML = `
-                    <div class="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center text-sm font-bold">${escapeHtml(avatarInitial)}</div>
+                    <div class="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center text-sm font-bold">${avatarInitial}</div>
                     <input value="${safeName}" onchange="updateCrew(${i}, this.value)" class="bg-transparent border-none focus:outline-none flex-1 font-medium text-white">
                     ${crew.length > 1 ? `<button onclick="removeCrew(${i})" class="text-red-400 text-xl leading-none">×</button>` : ''}
                 `;
@@ -215,7 +219,7 @@
         }
 
         function addCrewMember() {
-            if (crew.length < 8) {
+            if (crew.length < MAX_CREW_SIZE) {
                 crew.push(`Crew ${crew.length + 1}`);
                 renderCrew();
                 saveData();
@@ -373,13 +377,57 @@
                 reader.onload = ev => {
                     try {
                         const imported = JSON.parse(ev.target.result);
-                        if (Array.isArray(imported.logs)) logs = logs.concat(imported.logs.filter(item => item && typeof item === 'object'));
-                        if (Array.isArray(imported.stories)) stories = stories.concat(imported.stories.filter(item => item && typeof item === 'object'));
+                        if (Array.isArray(imported.logs)) {
+                            const existingLogIds = logs.map(item => Number(item?.id)).filter(Number.isFinite);
+                            const usedLogIds = new Set(existingLogIds);
+                            let nextLogId = Math.max(0, ...existingLogIds) + 1;
+                            const sanitizedLogs = imported.logs
+                                .filter(item => item && typeof item === 'object')
+                                .map(item => {
+                                    let id = Number(item.id);
+                                    if (!Number.isFinite(id) || id < 0 || usedLogIds.has(id)) {
+                                        id = nextLogId++;
+                                    }
+                                    usedLogIds.add(id);
+                                    return {
+                                        id,
+                                        timestamp: String(item.timestamp || ''),
+                                        angler: String(item.angler || ''),
+                                        location: String(item.location || ''),
+                                        species: String(item.species || ''),
+                                        weight: Number(item.weight) || 0,
+                                        length: Number(item.length) || 0,
+                                        notes: String(item.notes || ''),
+                                        story: String(item.story || '')
+                                    };
+                                });
+                            logs = logs.concat(sanitizedLogs);
+                        }
+                        if (Array.isArray(imported.stories)) {
+                            const existingStoryIds = stories.map(item => Number(item?.id)).filter(Number.isFinite);
+                            const usedStoryIds = new Set(existingStoryIds);
+                            let nextStoryId = Math.max(0, ...existingStoryIds) + 1;
+                            const sanitizedStories = imported.stories
+                                .filter(item => item && typeof item === 'object')
+                                .map(item => {
+                                    let id = Number(item.id);
+                                    if (!Number.isFinite(id) || id < 0 || usedStoryIds.has(id)) {
+                                        id = nextStoryId++;
+                                    }
+                                    usedStoryIds.add(id);
+                                    return {
+                                        id,
+                                        text: String(item.text || ''),
+                                        timestamp: String(item.timestamp || '')
+                                    };
+                                });
+                            stories = stories.concat(sanitizedStories);
+                        }
                         if (Array.isArray(imported.crew)) {
                             const importedCrew = imported.crew
                                 .map(name => String(name).trim())
                                 .filter(Boolean)
-                                .slice(0, 8);
+                                .slice(0, MAX_CREW_SIZE);
                             if (importedCrew.length > 0) crew = importedCrew;
                         }
                         saveData();
