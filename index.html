@@ -448,6 +448,7 @@
         let logs = [];
         let stories = [];
         let chartInstance = null;
+        const MAX_CREW_SIZE = 8;
 
         const edseComments = [
             "Per Professor Edse: This catch generated enough entropy to require a full blackboard wipe-down. Formulas confirm—thermodynamics in action from his von Braun days!",
@@ -456,6 +457,17 @@
             "This one filled the imaginary blackboard. Prof. Rudolph Edse approves from the thermo lab!",
             "Heat transfer off the charts! Edse is somewhere smiling while erasing the board and scribbling new formulas."
         ];
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"'`]/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+                '`': '&#96;'
+            }[char]));
+        }
 
         function saveData() {
             localStorage.setItem('beaverCrew', JSON.stringify(crew));
@@ -476,11 +488,14 @@
             const container = document.getElementById('crew-list');
             container.innerHTML = '';
             crew.forEach((name, i) => {
+                const trimmedName = String(name ?? '').trim();
+                const safeName = escapeHtml(trimmedName);
+                const avatarInitial = escapeHtml(trimmedName.charAt(0) || '?');
                 const div = document.createElement('div');
                 div.className = 'crew-card';
                 div.innerHTML = `
-                    <div class="crew-avatar">${name[0] || '?'}</div>
-                    <input value="${name}" onchange="updateCrew(${i}, this.value)" class="crew-name-input" placeholder="Name">
+                    <div class="crew-avatar">${avatarInitial}</div>
+                    <input value="${safeName}" onchange="updateCrew(${i}, this.value)" class="crew-name-input" placeholder="Name">
                     ${crew.length > 1 ? `<button onclick="removeCrew(${i})" class="crew-remove">×</button>` : ''}
                 `;
                 container.appendChild(div);
@@ -490,11 +505,12 @@
 
         function updateCrew(i, val) {
             crew[i] = val.trim() || `Crew ${i+1}`;
+            renderCrew();
             saveData();
         }
 
         function addCrewMember() {
-            if (crew.length < 8) {
+            if (crew.length < MAX_CREW_SIZE) {
                 crew.push(`Crew ${crew.length + 1}`);
                 renderCrew();
                 saveData();
@@ -553,13 +569,13 @@
                     <div class="log-entry">
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                             <div>
-                                <span style="font-weight:600;">${log.angler}</span>
-                                <span style="color:var(--chalk-gray);font-size:0.78rem;margin-left:0.4rem;">${log.timestamp}</span>
+                                <span style="font-weight:600;">${escapeHtml(log.angler)}</span>
+                                <span style="color:var(--chalk-gray);font-size:0.78rem;margin-left:0.4rem;">${escapeHtml(log.timestamp)}</span>
                             </div>
-                            <div class="log-weight">${log.weight} lbs</div>
+                            <div class="log-weight">${Number(log.weight || 0).toFixed(1)} lbs</div>
                         </div>
-                        <div style="margin-top:0.3rem;font-size:0.95rem;">${log.species} <span style="color:var(--chalk-gray);">•</span> ${log.location}</div>
-                        ${log.story ? `<div style="margin-top:0.65rem;font-size:0.85rem;font-style:italic;color:var(--chalk-gray);">"${log.story}"</div>` : ''}
+                        <div style="margin-top:0.3rem;font-size:0.95rem;">${escapeHtml(log.species)} <span style="color:var(--chalk-gray);">•</span> ${escapeHtml(log.location)}</div>
+                        ${log.story ? `<div style="margin-top:0.65rem;font-size:0.85rem;font-style:italic;color:var(--chalk-gray);">"${escapeHtml(log.story)}"</div>` : ''}
                     </div>
                 `).join('');
         }
@@ -575,7 +591,7 @@
                 <div class="lb-entry">
                     <div style="display:flex;align-items:center;gap:1rem;">
                         <div class="lb-rank">${idx + 1}</div>
-                        <div>${entry.name}</div>
+                        <div>${escapeHtml(entry.name)}</div>
                     </div>
                     <div style="text-align:right;">
                         <div style="color:var(--chalk-gray);font-size:0.85rem;">${entry.count} fish</div>
@@ -641,8 +657,8 @@
                 ? '<p style="color:var(--chalk-gray);text-align:center;padding:2rem 0;">No stories yet. Add some Prof. Edse blackboard classics!</p>'
                 : stories.map(s => `
                     <div class="story-entry">
-                        <div style="font-size:0.72rem;color:var(--chalk-gray);letter-spacing:0.05em;text-transform:uppercase;">${s.timestamp}</div>
-                        <p style="margin-top:0.5rem;line-height:1.65;">${s.text}</p>
+                        <div style="font-size:0.72rem;color:var(--chalk-gray);letter-spacing:0.05em;text-transform:uppercase;">${escapeHtml(s.timestamp)}</div>
+                        <p style="margin-top:0.5rem;line-height:1.65;">${escapeHtml(s.text)}</p>
                     </div>
                 `).join('');
         }
@@ -680,9 +696,59 @@
                 reader.onload = ev => {
                     try {
                         const imported = JSON.parse(ev.target.result);
-                        if (imported.logs)    logs    = logs.concat(imported.logs);
-                        if (imported.stories) stories = stories.concat(imported.stories);
-                        if (imported.crew)    crew    = imported.crew;
+                        if (Array.isArray(imported.logs)) {
+                            const existingLogIds = logs.map(item => Number(item?.id)).filter(Number.isFinite);
+                            const usedLogIds = new Set(existingLogIds);
+                            let nextLogId = Math.max(0, ...existingLogIds) + 1;
+                            const sanitizedLogs = imported.logs
+                                .filter(item => item && typeof item === 'object')
+                                .map(item => {
+                                    let id = Number(item.id);
+                                    if (!Number.isFinite(id) || id < 0 || usedLogIds.has(id)) {
+                                        id = nextLogId++;
+                                    }
+                                    usedLogIds.add(id);
+                                    return {
+                                        id,
+                                        timestamp: String(item.timestamp || ''),
+                                        angler: String(item.angler || ''),
+                                        location: String(item.location || ''),
+                                        species: String(item.species || ''),
+                                        weight: Number(item.weight) || 0,
+                                        length: Number(item.length) || 0,
+                                        notes: String(item.notes || ''),
+                                        story: String(item.story || '')
+                                    };
+                                });
+                            logs = logs.concat(sanitizedLogs);
+                        }
+                        if (Array.isArray(imported.stories)) {
+                            const existingStoryIds = stories.map(item => Number(item?.id)).filter(Number.isFinite);
+                            const usedStoryIds = new Set(existingStoryIds);
+                            let nextStoryId = Math.max(0, ...existingStoryIds) + 1;
+                            const sanitizedStories = imported.stories
+                                .filter(item => item && typeof item === 'object')
+                                .map(item => {
+                                    let id = Number(item.id);
+                                    if (!Number.isFinite(id) || id < 0 || usedStoryIds.has(id)) {
+                                        id = nextStoryId++;
+                                    }
+                                    usedStoryIds.add(id);
+                                    return {
+                                        id,
+                                        text: String(item.text || ''),
+                                        timestamp: String(item.timestamp || '')
+                                    };
+                                });
+                            stories = stories.concat(sanitizedStories);
+                        }
+                        if (Array.isArray(imported.crew)) {
+                            const importedCrew = imported.crew
+                                .map(name => String(name).trim())
+                                .filter(Boolean)
+                                .slice(0, MAX_CREW_SIZE);
+                            if (importedCrew.length > 0) crew = importedCrew;
+                        }
                         saveData();
                         renderCrew();
                         alert('✅ Data imported!');
@@ -698,7 +764,9 @@
 
         function clearAllData() {
             if (confirm('Reset everything?')) {
-                localStorage.clear();
+                localStorage.removeItem('beaverCrew');
+                localStorage.removeItem('beaverLogs');
+                localStorage.removeItem('beaverStories');
                 logs = [];
                 stories = [];
                 crew = ["Tim", "Buddy 1", "Buddy 2", "Buddy 3"];
