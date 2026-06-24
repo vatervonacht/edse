@@ -69,6 +69,46 @@
             pointer-events: none;
         }
 
+        /* ── Header photo ───────────────────────────────── */
+        .header-photo {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(245,245,245,0.55);
+            flex-shrink: 0;
+            transform: rotate(-6deg);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+            transition: transform 0.3s;
+        }
+        .header-photo:hover { transform: rotate(0deg) scale(1.08); }
+
+        /* ── Header right panel ─────────────────────────── */
+        .header-right {
+            text-align: right;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.35rem;
+        }
+
+        /* ── OSU logo ───────────────────────────────────── */
+        .osu-logo {
+            width: 36px;
+            height: 36px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        /* ── Mission badge ──────────────────────────────── */
+        .mission-badge {
+            background: rgba(245,245,245,0.15);
+            border: 1px solid rgba(245,245,245,0.22);
+            border-radius: 0.5rem;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.78rem;
+        }
+
         /* ── Cards ──────────────────────────────────────── */
         .chalk-card {
             background-color: var(--board-card);
@@ -310,14 +350,30 @@
         <!-- Header -->
         <header class="chalk-header p-6 mb-6 shadow-xl">
             <div class="flex items-center justify-between gap-4">
-                <div>
+                <!-- Edse photo — tilted & fun, won't steal focus -->
+                <img src="edse.png" alt="Dr. Edse"
+                     style="width:70px;height:70px;border-radius:50%;object-fit:cover;
+                            border:3px solid rgba(245,245,245,0.55);flex-shrink:0;
+                            transform:rotate(-6deg);box-shadow:0 4px 14px rgba(0,0,0,0.45);
+                            transition:transform 0.3s;"
+                     onmouseover="this.style.transform='rotate(0deg) scale(1.08)'"
+                     onmouseout="this.style.transform='rotate(-6deg)'">
+                <div style="flex:1;">
                     <h1 class="chalk-title text-4xl font-bold">🐟 Beaver Telemetry</h1>
                     <p style="color:rgba(245,245,245,0.82);font-size:0.875rem;margin-top:0.2rem;">
                         Tahsis 2026 • Westview Marina • OSU Aero '89
                     </p>
                 </div>
-                <div style="text-align:right;flex-shrink:0;">
-                    <div style="background:rgba(245,245,245,0.15);border:1px solid rgba(245,245,245,0.22);border-radius:0.5rem;padding:0.2rem 0.7rem;font-size:0.78rem;margin-bottom:0.4rem;">
+                <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:0.35rem;">
+                    <!-- Ohio State Block-O logo -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"
+                         style="width:36px;height:36px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));"
+                         aria-label="Ohio State">
+                        <circle cx="50" cy="50" r="48" fill="#BA0C2F"/>
+                        <circle cx="50" cy="50" r="30" fill="none" stroke="#FFFFFF" stroke-width="13"/>
+                        <circle cx="50" cy="50" r="14" fill="#BA0C2F"/>
+                    </svg>
+                    <div style="background:rgba(245,245,245,0.15);border:1px solid rgba(245,245,245,0.22);border-radius:0.5rem;padding:0.2rem 0.7rem;font-size:0.78rem;">
                         Nootka / Esperanza Mission
                     </div>
                     <div class="eqn-watermark">ΔS ≥ 0 &nbsp;•&nbsp; dU = δQ − δW</div>
